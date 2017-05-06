@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# This Python file uses the following encoding: utf-8
 
 """
 gen_CR_review_tbl helps me automate a fucking boring stuff: parse a given excel file from CQ,
