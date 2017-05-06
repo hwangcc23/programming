@@ -1,2 +1,2 @@
 # programming
-Personal staff, sample code, exercise
+Personal stuffs, sample code, exercise
