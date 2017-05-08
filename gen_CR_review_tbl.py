@@ -17,6 +17,7 @@ import getopt
 import openpyxl
 import copy
 from openpyxl.styles import NamedStyle, Color, colors, Font, Border, Side, PatternFill
+from openpyxl.utils import get_column_letter
 
 def usage():
     print("gen_CR_review_tbl: Gnerate the CR review table from the raw CQ excel file")
@@ -137,7 +138,6 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file):
     sheet_cr.cell(row=1, column=2).value = "Actions" + '\n' + "- Please provide your actions for debugging this CR, and the expecting due date of each action" + '\n' + "請不要寫\"分析中\". 請列出接下來會作哪些事, 各自預計在什麼時間作完" + '\n' + "- Never just say you will transfer the CR to another colleague. Please sync with the next PIC to provide actions" + '\n' + "請不要寫\"我把CR轉給誰誰誰了\". 請跟下一手先串好, 列出接下來會作哪些事, 各自預計在什麼時間作完"
     sheet_cr.cell(row=1, column=2).fill = yellow_fill
     sheet_cr.cell(row=1, column=2).border = border
-    # TODO: data filter
     # TODO: re-arrange the sequence (ID, severity, assignee first)
     for i in range(1, sheet_raw.max_column + 1):
         value = sheet_raw.cell(row=1, column=i).value
@@ -152,6 +152,8 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file):
         for j in range(1, sheet_raw.max_column + 1):
             sheet_cr.cell(row=2+i, column=2+j).value = CRs[i][sheet_raw.cell(row=1, column=j).value]
             sheet_cr.cell(row=2+i, column=2+j).border = border
+    filter = "A1:%s%d" % (get_column_letter(sheet_cr.max_column), sheet_cr.max_row)
+    sheet_cr.auto_filter.ref = filter
 
     sheet_review = wb.create_sheet(index=1, title="review table")
     sheet_review.cell(row=2, column=2).value = "Session"
@@ -188,7 +190,10 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file):
         sheet_review.cell(row=3+i, column=5).value = review_tbl[i]["count"]
         sheet_review.cell(row=3+i, column=6).value = review_tbl[i]["window"]
         sheet_review.cell(row=3+i, column=8).value = review_tbl[i]["team"] + "_manager"
+    filter = "A2:%s%d" % (get_column_letter(sheet_review.max_column), sheet_review.max_row + 1)
+    sheet_review.auto_filter.ref = filter
 
+    wb.active = 0
     wb.save(output_file)
 
     print("")
