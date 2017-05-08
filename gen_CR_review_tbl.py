@@ -84,8 +84,9 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file):
         for j in range(0, len(review_tbl)):
             if CRs[i]["Assignee.groups.name"] == review_tbl[j]["team"]:
                 review_tbl[j]["count"] += 1
+                # NoteXXX: If the team window cannot be found, assign the assignee
                 if review_tbl[j]["have_window"] == 0:
-                    review_tbl[j]["window"] += "," + CRs[i]["Assignee_Name"]
+                    review_tbl[j]["window"] += ";" + CRs[i]["Assignee_Name"]
                 existing = 1
         if existing == 0:
             review_rec = {}
