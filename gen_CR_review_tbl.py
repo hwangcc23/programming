@@ -19,6 +19,8 @@ import copy
 from openpyxl.styles import NamedStyle, Color, colors, Font, Border, Side, PatternFill
 from openpyxl.utils import get_column_letter
 
+CON_FIND_ASSIGNEE = "find_assignee"
+
 def usage():
     print("gen_CR_review_tbl: Gnerate the CR review table from the raw CQ excel file")
     print("Usage: gen_CR_review_tbl [options]")
@@ -27,6 +29,7 @@ def usage():
     print("       -i|--input FILENAME: give the raw CQ excel file")
     print("       -o|--output FILENAME: specify the output file name")
     print("       -m|--mapping FILENAME: give the team/window mapping file")
+    print("       -c|--condition CONDITIONS: give the extra conditions(supported conditions: \"find_assignee\")")
 
 def team_window_mapping(mapping_file):
     wb = openpyxl.load_workbook(mapping_file)
@@ -57,7 +60,7 @@ def team_window_mapping(mapping_file):
     return team_windows
 
 
-def gen_CR_review_tbl(input_file, output_file, mapping_file):
+def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
     print("input_file = " + input_file, ", output_file = " + output_file)
     print("Generate CR review table...")
     print("")
@@ -85,6 +88,8 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file):
         for j in range(0, len(review_tbl)):
             if CRs[i]["Assignee.groups.name"] == review_tbl[j]["team"]:
                 review_tbl[j]["count"] += 1
+                if condition.find(CON_FIND_ASSIGNEE) != -1:
+                    review_tbl[j]["window"] += ";" + CRs[i]["Assignee_Name"]
                 # NoteXXX: If the team window cannot be found, assign the assignee
                 if review_tbl[j]["have_window"] == 0:
                     review_tbl[j]["window"] += ";" + CRs[i]["Assignee_Name"]
@@ -108,8 +113,10 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file):
                     review_rec["window"] = team_windows[k]["window"]
                     review_rec["have_window"] = 1
                     break
+            if condition.find(CON_FIND_ASSIGNEE) != -1:
+                review_rec["window"] = CRs[i]["Assignee_Name"]
             # NoteXXX: If the team window cannot be found, assign the assignee
-            if review_rec["have_window"] == 0:
+            elif review_rec["have_window"] == 0:
                 review_rec["window"] = CRs[i]["Assignee_Name"]
             review_tbl.append(copy.copy(review_rec))
     review_tbl = sorted(review_tbl, key=lambda x: x["category"])
@@ -219,16 +226,15 @@ if __name__ == "__main__":
         sys.exit(0)
 
     try:
-        opts, args = getopt.getopt(argv, "hi:o:m:", ["input=", "output=", "mapping="])
+        opts, args = getopt.getopt(argv, "hi:o:m:c:", ["input=", "output=", "mapping=", "condition="])
     except getopt.GetoptError:
         usage()
         sys.exit(0)
 
-    # TODO: to support CR filter
-
     input_file = ""
     output_file = "Issue_Open.xlsx"
     mapping_file = ""
+    condition = ""
 
     for opt, arg in opts:
         if opt == "-h":
@@ -240,6 +246,8 @@ if __name__ == "__main__":
             output_file = arg
         elif opt in ("--mapping", "-m"):
             mapping_file = arg
+        elif opt in ("--condition", "-c"):
+            condition = arg
 
     if input_file == "":
         print("Error: input file is not given")
@@ -251,4 +259,4 @@ if __name__ == "__main__":
         usage()
         sys.exit(0)
 
-    gen_CR_review_tbl(input_file, output_file, mapping_file)
+    gen_CR_review_tbl(input_file, output_file, mapping_file, condition)
