@@ -20,6 +20,8 @@ from openpyxl.styles import NamedStyle, Color, colors, Font, Border, Side, Patte
 from openpyxl.utils import get_column_letter
 
 CON_FIND_ASSIGNEE = "find_assignee"
+CON_BYPASS_MODEM = "bypass_modem"
+CON_BYPASS_CONN = "bypass_conn"
 
 def usage():
     print("gen_CR_review_tbl: Gnerate the CR review table from the raw CQ excel file")
@@ -29,7 +31,7 @@ def usage():
     print("       -i|--input FILENAME: give the raw CQ excel file")
     print("       -o|--output FILENAME: specify the output file name")
     print("       -m|--mapping FILENAME: give the team/window mapping file")
-    print("       -c|--condition CONDITIONS: give the extra conditions(supported conditions: \"find_assignee\")")
+    print("       -c|--condition CONDITIONS: give the extra conditions(supported conditions: \"find_assignee\",\"bypass_modem\",\"bypass_conn\")")
 
 def team_window_mapping(mapping_file):
     wb = openpyxl.load_workbook(mapping_file)
@@ -59,6 +61,15 @@ def team_window_mapping(mapping_file):
 
     return team_windows
 
+def team_category(team):
+    if team.find("WSP") != -1 or team.find("wsp") != -1 \
+    or team.find("WCS") != -1 or team.find("wcs") != -1:
+        return "Modem"
+    elif team.find("CTD") != -1 or team.find("ctd") != -1 \
+    or team.find("WSD_SE") != -1 or team.find("wsd_se") != -1:
+        return "Conn"
+    else:
+        return "AP"
 
 def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
     print("input_file = " + input_file, ", output_file = " + output_file)
@@ -97,14 +108,7 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
         if existing == 0:
             review_rec = {}
             review_rec["team"] = CRs[i]["Assignee.groups.name"]
-            if review_rec["team"].find("WSP") != -1 or review_rec["team"].find("wsp") != -1 \
-            or review_rec["team"].find("WCS") != -1 or review_rec["team"].find("wcs") != -1:
-                review_rec["category"] = "Modem"
-            elif review_rec["team"].find("CTD") != -1 or review_rec["team"].find("ctd") != -1 \
-            or review_rec["team"].find("WSD_SE") != -1 or review_rec["team"].find("wsd_se") != -1:
-                review_rec["category"] = "Conn"
-            else:
-                review_rec["category"] = "AP"
+            review_rec["category"] = team_category(review_rec["team"])
             review_rec["count"] = 1
             review_rec["have_window"] = 0
             for k in range(0, len(team_windows)):
@@ -206,10 +210,18 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
     print("")
     attendees = ""
     for i in range(0, len(review_tbl)):
+        if condition.find(CON_BYPASS_MODEM) != -1 and team_category(review_tbl[i]["team"]) == "Modem":
+            continue
+        if condition.find(CON_BYPASS_CONN) != -1 and team_category(review_tbl[i]["team"]) == "Conn":
+            continue
         attendees += review_tbl[i]["window"] + ";"
     managers = ""
     for i in range(0, len(review_tbl)):
         team = review_tbl[i]["team"].upper()
+        if condition.find(CON_BYPASS_MODEM) != -1 and team_category(team) == "Modem":
+            continue
+        if condition.find(CON_BYPASS_CONN) != -1 and team_category(team) == "Conn":
+            continue
         if team.find("MBJ_") == -1 and team.find("MCD_") == -1 and team.find("MTI_") == -1 and team.find("MTB_") == -1:
             team = "MTK_" + team
         managers += team + "_manager" + ";"
