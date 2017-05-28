@@ -22,6 +22,9 @@ from openpyxl.utils import get_column_letter
 CON_FIND_ASSIGNEE = "find_assignee"
 CON_BYPASS_MODEM = "bypass_modem"
 CON_BYPASS_CONN = "bypass_conn"
+CON_SORTING = "sorting"
+
+sorting_titles = ["id", "Severity", "Assignee.groups.name", "Assignee_Name"]
 
 def usage():
     print("gen_CR_review_tbl: Gnerate the CR review table from the raw CQ excel file")
@@ -31,7 +34,7 @@ def usage():
     print("       -i|--input FILENAME: give the raw CQ excel file")
     print("       -o|--output FILENAME: specify the output file name")
     print("       -m|--mapping FILENAME: give the team/window mapping file")
-    print("       -c|--condition CONDITIONS: give the extra conditions(supported conditions: \"find_assignee\",\"bypass_modem\",\"bypass_conn\")")
+    print("       -c|--condition CONDITIONS: give the extra conditions(supported conditions: \"find_assignee\",\"bypass_modem\",\"bypass_conn\",\"sorting\")")
 
 def team_window_mapping(mapping_file):
     wb = openpyxl.load_workbook(mapping_file)
@@ -130,6 +133,16 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
     wb.active.title = "raw data"
     sheet_raw = wb.get_sheet_by_name("raw data")
 
+    titles = []
+    for i in range(1, sheet_raw.max_column + 1):
+        value = sheet_raw.cell(row=1, column=i).value
+        if condition.find(CON_SORTING) != -1:
+            if value not in sorting_titles:
+                titles.append(value)
+        else:
+            titles.append(value)
+    titles = sorting_titles + titles
+
     highlight = NamedStyle(name="highlight")
     highlight.font = Font(bold=True, size=20)
     bd = Side(style='thick', color="000000")
@@ -149,19 +162,17 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
     sheet_cr.cell(row=1, column=2).value = "Actions" + '\n' + "- Please provide your actions for debugging this CR, and the expecting due date of each action" + '\n' + "請不要寫\"分析中\". 請列出接下來會作哪些事, 各自預計在什麼時間作完" + '\n' + "- Never just say you will transfer the CR to another colleague. Please sync with the next PIC to provide actions" + '\n' + "請不要寫\"我把CR轉給誰誰誰了\". 請跟下一手先串好, 列出接下來會作哪些事, 各自預計在什麼時間作完"
     sheet_cr.cell(row=1, column=2).fill = yellow_fill
     sheet_cr.cell(row=1, column=2).border = border
-    # TODO: re-arrange the sequence (ID, severity, assignee first)
-    for i in range(1, sheet_raw.max_column + 1):
-        value = sheet_raw.cell(row=1, column=i).value
-        sheet_cr.cell(row=1, column=2+i).value = value
-        sheet_cr.cell(row=1, column=2+i).fill = yellow_fill
-        sheet_cr.cell(row=1, column=2+i).border = border
-        if value == "id":
-            sheet_cr.column_dimensions[sheet_cr.cell(row=1, column=2+i).column].width = 15
+    for i in range(0, len(titles)):
+        sheet_cr.cell(row=1, column=3+i).value = titles[i]
+        sheet_cr.cell(row=1, column=3+i).fill = yellow_fill
+        sheet_cr.cell(row=1, column=3+i).border = border
+        if titles[i] == "id":
+            sheet_cr.column_dimensions[sheet_cr.cell(row=1, column=3+i).column].width = 15
     for i in range(0, len(CRs)):
         sheet_cr.cell(row=2+i, column=1).border = border
         sheet_cr.cell(row=2+i, column=2).border = border
         for j in range(1, sheet_raw.max_column + 1):
-            sheet_cr.cell(row=2+i, column=2+j).value = CRs[i][sheet_raw.cell(row=1, column=j).value]
+            sheet_cr.cell(row=2+i, column=2+j).value = CRs[i][sheet_cr.cell(row=1, column=2+j).value]
             sheet_cr.cell(row=2+i, column=2+j).border = border
     filter = "A1:%s%d" % (get_column_letter(sheet_cr.max_column), sheet_cr.max_row)
     sheet_cr.auto_filter.ref = filter
