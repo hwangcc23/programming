@@ -134,6 +134,8 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
     sheet_raw = wb.get_sheet_by_name("raw data")
 
     titles = []
+    if condition.find(CON_SORTING) != -1:
+        titles = sorting_titles + titles
     for i in range(1, sheet_raw.max_column + 1):
         value = sheet_raw.cell(row=1, column=i).value
         if condition.find(CON_SORTING) != -1:
@@ -141,7 +143,6 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
                 titles.append(value)
         else:
             titles.append(value)
-    titles = sorting_titles + titles
 
     highlight = NamedStyle(name="highlight")
     highlight.font = Font(bold=True, size=20)
