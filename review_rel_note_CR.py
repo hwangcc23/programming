@@ -16,9 +16,7 @@ published by the Free Software Foundation.
 import sys
 import getopt
 import openpyxl
-
-def review_rel_note_CR():
-    return
+import copy
 
 def usage():
     print("review_rel_note_CR: find need-attention CRs in an excel file of a CR list for release note")
@@ -28,6 +26,53 @@ def usage():
     print("       -i|--input FILENAME: give the input excel file")
     print("       -o|--output FILENAME: specify the output file name (default: \"__\"##input)")
     print("       -k|--keyword FILENAME: give the keyword file")
+
+def get_keywords(keyword_file):
+    keywords = []
+    try:
+        f = open(keyword_file, "r")
+        try:
+            while 1:
+                line = f.readline()
+                if line == "":
+                    break
+                if line[0] == "#":
+                    continue
+                keyword = line.strip('\n')
+                if keyword == "":
+                    continue
+                keywords.append(copy.copy(keyword))
+        except IOError:
+            print("Fail to read " + keyword_file)
+        finally:
+            f.close()
+    except IOError:
+        print("Fail to open " + keyword_file)
+    #print(keywords)
+    return keywords
+
+def review_rel_note_CR(input_file, output_file, keyword_file):
+    print("input_file = " + input_file, ", output_file = " + output_file, ", keyword_file = " + keyword_file)
+    print("Generating...")
+
+    keywords = get_keywords(keyword_file)
+    if len(keywords) == 0:
+        print("No keyword is found")
+        print("Abort")
+        return
+
+    CRs = []
+    wb = openpyxl.load_workbook(input_file)
+    sheet = wb.active
+    for row in range(1, sheet.max_row + 1):
+        CR = {}
+        for col in range(1, sheet.max_column + 1):
+            cell = sheet.cell(row=row, column=col)
+            CR[sheet.cell(row=1, column=col).value] = cell.value
+        CRs.append(copy.copy(CR))
+
+    print("done")
+    return
 
 if __name__ == "__main__":
     argv = sys.argv[1:]
@@ -42,7 +87,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     input_file = ""
-    output_file = "__" + input_file 
+    output_file = ""
     keyword_file = ""
 
     for opt, arg in opts:
@@ -54,16 +99,19 @@ if __name__ == "__main__":
         elif opt in ("--output", "-o"):
             output_file = arg
         elif opt in ("--keyword", "-k"):
-            keyword = arg
+            keyword_file = arg
 
     if input_file == "":
         print("Error: input file is not given")
         usage()
         sys.exit(0)
 
+    if output_file == "":
+        output_file = "__" + input_file
+
     if keyword_file == "":
         print("Error: keyword file is not given")
         usage()
         sys.exit(0)
 
-    review_rel_note_CR()
+    review_rel_note_CR(input_file, output_file, keyword_file)
