@@ -61,8 +61,14 @@ def review_rel_note_CR(input_file, output_file, keyword_file):
         print("Abort")
         return
 
+    try:
+        wb = openpyxl.load_workbook(input_file)
+    except IOError:
+        print("Fail to load workbook from " + input_file)
+        print("Abort")
+        return
+
     CRs = []
-    wb = openpyxl.load_workbook(input_file)
     sheet = wb.active
     for row in range(1, sheet.max_row + 1):
         CR = {}
