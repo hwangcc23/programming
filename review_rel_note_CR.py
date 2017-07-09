@@ -68,13 +68,24 @@ def review_rel_note_CR(input_file, output_file, keyword_file):
         print("Abort")
         return
 
-    CRs = []
     sheet = wb.active
+
+    Titles = []
+    title_row = 1
     for row in range(1, sheet.max_row + 1):
+        if sheet.cell(row=row, column=1).value == "CR ID":
+            title_row = row
+            break
+    for col in range(1, sheet.max_column + 1):
+        cell = sheet.cell(row=title_row, column=col)
+        Titles.append(copy.copy(cell.value))
+
+    CRs = []
+    for row in range(title_row, sheet.max_row + 1):
         CR = {}
         for col in range(1, sheet.max_column + 1):
             cell = sheet.cell(row=row, column=col)
-            CR[sheet.cell(row=1, column=col).value] = cell.value
+            CR[sheet.cell(row=title_row, column=col).value] = cell.value
         CRs.append(copy.copy(CR))
 
     print("done")
