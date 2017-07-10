@@ -51,6 +51,19 @@ def get_keywords(keyword_file):
     #print(keywords)
     return keywords
 
+def mark_keywords(keywords, CR):
+    need_attention = ""
+    for key in CR:
+        for i in range(0, len(keywords)):
+            if CR[key] != None and CR[key].find(keywords[i]) != -1:
+                if need_attention != "":
+                    need_attention = need_attention + ","
+                need_attention = need_attention + keywords[i].strip("\n")
+
+    CR["Need attention"] = need_attention
+
+    return CR
+
 def review_rel_note_CR(input_file, output_file, keyword_file):
     print("input_file = " + input_file, ", output_file = " + output_file, ", keyword_file = " + keyword_file)
     print("Generating...")
@@ -81,12 +94,16 @@ def review_rel_note_CR(input_file, output_file, keyword_file):
         Titles.append(copy.copy(cell.value))
 
     CRs = []
-    for row in range(title_row, sheet.max_row + 1):
+    for row in range(title_row + 1, sheet.max_row + 1):
         CR = {}
         for col in range(1, sheet.max_column + 1):
             cell = sheet.cell(row=row, column=col)
             CR[sheet.cell(row=title_row, column=col).value] = cell.value
         CRs.append(copy.copy(CR))
+
+    reviewed_CRs = []
+    for i in range(0, len(CRs)):
+        reviewed_CRs.append(copy.copy(mark_keywords(keywords, CRs[i])))
 
     print("done")
     return
