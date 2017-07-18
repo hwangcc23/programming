@@ -17,6 +17,8 @@ import sys
 import getopt
 import openpyxl
 import copy
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font
 
 def usage():
     print("review_rel_note_CR: find need-attention CRs in an excel file of a CR list for release note")
@@ -104,6 +106,58 @@ def review_rel_note_CR(input_file, output_file, keyword_file):
     reviewed_CRs = []
     for i in range(0, len(CRs)):
         reviewed_CRs.append(copy.copy(mark_keywords(keywords, CRs[i])))
+
+    wrap_alignment = Alignment(wrap_text=True)
+    font = Font(name='Arial', size=10)
+    title_font = Font(name='Arial Black', size=10, bold=True)
+
+    wb = Workbook()
+    reviewed_sheet = wb.active
+
+    for i in range(1, title_row):
+        for j in range(1, sheet.max_column+1):
+            c = reviewed_sheet.cell(row=i, column=j)
+            c.value = sheet.cell(row=i, column=j).value
+            c.style = copy.copy(sheet.cell(row=i, column=j).style)
+            c.alignment = copy.copy(sheet.cell(row=i, column=j).alignment)
+            c.fill = copy.copy(sheet.cell(row=i, column=j).fill)
+            c.font = copy.copy(sheet.cell(row=i, column=j).font)
+
+    for i in range(0, len(Titles)):
+        c = reviewed_sheet.cell(row=title_row, column=1+i)
+        c.value = Titles[i]
+        c.font = title_font
+    reviewed_sheet.cell(row=title_row, column=1+len(Titles)).value = "Need attention"
+    reviewed_sheet.cell(row=title_row, column=1+len(Titles)).font = title_font
+    for i in range(0, len(reviewed_CRs)):
+        for j in range(1, reviewed_sheet.max_column+1):
+            c = reviewed_sheet.cell(row=title_row+1+i, column=j)
+            c.value = reviewed_CRs[i][reviewed_sheet.cell(row=title_row, column=j).value]
+            c.alignment = wrap_alignment
+            c.font = font
+
+    for i in range(title_row+1, sheet.max_row+1):
+        reviewed_sheet.row_dimensions[i].height = 49.5
+    reviewed_sheet.column_dimensions['A'].width = 15
+    reviewed_sheet.column_dimensions['B'].width = 21
+    reviewed_sheet.column_dimensions['C'].width = 60
+    reviewed_sheet.column_dimensions['D'].width = 15
+    reviewed_sheet.column_dimensions['E'].width = 15
+    reviewed_sheet.column_dimensions['F'].width = 40
+    reviewed_sheet.column_dimensions['G'].width = 15
+    reviewed_sheet.column_dimensions['H'].width = 40
+    reviewed_sheet.column_dimensions['I'].width = 40
+    reviewed_sheet.column_dimensions['J'].width = 40
+    reviewed_sheet.column_dimensions['K'].width = 40
+    reviewed_sheet.column_dimensions['L'].width = 40
+    reviewed_sheet.column_dimensions['M'].width = 15
+
+    try:
+        wb.save(output_file)
+    except IOError:
+        print("Fail to save " + output_file)
+        print("Abort")
+        return
 
     print("done")
     return
