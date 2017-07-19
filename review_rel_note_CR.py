@@ -103,6 +103,9 @@ def review_rel_note_CR(input_file, output_file, keyword_file):
             CR[sheet.cell(row=title_row, column=col).value] = cell.value
         CRs.append(copy.copy(CR))
 
+    # TODO: Add an option to remove CRs which info is empty
+    # TODO: Add an option to remove (rather than mark) CRs which record contain keywords  
+
     reviewed_CRs = []
     for i in range(0, len(CRs)):
         reviewed_CRs.append(copy.copy(mark_keywords(keywords, CRs[i])))
