@@ -118,7 +118,7 @@ def review_rel_note_CR(input_file, output_file, keyword_file):
         for j in range(1, sheet.max_column+1):
             c = reviewed_sheet.cell(row=i, column=j)
             c.value = sheet.cell(row=i, column=j).value
-            c.style = copy.copy(sheet.cell(row=i, column=j).style)
+            #c.style = copy.copy(sheet.cell(row=i, column=j).style)
             c.alignment = copy.copy(sheet.cell(row=i, column=j).alignment)
             c.fill = copy.copy(sheet.cell(row=i, column=j).fill)
             c.font = copy.copy(sheet.cell(row=i, column=j).font)
