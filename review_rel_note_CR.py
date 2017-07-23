@@ -57,7 +57,11 @@ def mark_keywords(keywords, CR):
     need_attention = ""
     for key in CR:
         for i in range(0, len(keywords)):
-            if CR[key] != None and CR[key].find(keywords[i]) != -1:
+            if CR[key] == None:
+                if need_attention != "":
+                    need_attention = need_attention + ","
+                need_attention = need_attention + "Empty"
+            elif CR[key].find(keywords[i]) != -1:
                 if need_attention != "":
                     need_attention = need_attention + ","
                 need_attention = need_attention + keywords[i].strip("\n")
