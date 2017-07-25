@@ -56,12 +56,15 @@ def get_keywords(keyword_file):
 def mark_keywords(keywords, CR):
     need_attention = ""
     for key in CR:
-        for i in range(0, len(keywords)):
-            if CR[key] == None:
+        if CR[key] == None:
+            if key != "eService ID" and need_attention.find("Empty") == -1:
                 if need_attention != "":
                     need_attention = need_attention + ","
                 need_attention = need_attention + "Empty"
-            elif CR[key].find(keywords[i]) != -1:
+            continue
+
+        for i in range(0, len(keywords)):
+            if CR[key].find(keywords[i]) != -1:
                 if need_attention != "":
                     need_attention = need_attention + ","
                 need_attention = need_attention + keywords[i].strip("\n")
