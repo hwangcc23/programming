@@ -17,6 +17,7 @@ import sys
 import getopt
 import openpyxl
 import copy
+import pyexcel # pip install pyexcel pyexcel-xls pyexcel-xlsx
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
 
@@ -75,6 +76,18 @@ def mark_keywords(keywords, CR):
 
 def review_rel_note_CR(input_file, output_file, keyword_file):
     print("input_file = " + input_file, ", output_file = " + output_file, ", keyword_file = " + keyword_file)
+
+    if not input_file.lower().endswith(".xlsx") and input_file.lower().endswith(".xls"):
+        orig_input_file = input_file
+        input_file = input_file + "x"
+        print("Convert " + orig_input_file + " to " + input_file)
+        try:
+            pyexcel.save_book_as(file_name=orig_input_file, dest_file_name=input_file)
+        except IOError:
+            print("Fail to convert " + orig_input_file)
+            print("Abort")
+            return
+
     print("Generating...")
 
     keywords = get_keywords(keyword_file)
