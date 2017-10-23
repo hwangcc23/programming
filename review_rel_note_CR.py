@@ -219,6 +219,8 @@ if __name__ == "__main__":
 
     if output_file == "":
         output_file = "__" + input_file
+        if not output_file.lower().endswith(".xlsx") and output_file.lower().endswith(".xls"):
+            output_file = output_file + "x"
 
     if keyword_file == "":
         print("Error: keyword file is not given")
