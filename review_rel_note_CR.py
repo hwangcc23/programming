@@ -77,7 +77,8 @@ def mark_keywords(keywords, CR):
 def review_rel_note_CR(input_file, output_file, keyword_file):
     print("input_file = " + input_file, ", output_file = " + output_file, ", keyword_file = " + keyword_file)
 
-    if not input_file.lower().endswith(".xlsx") and input_file.lower().endswith(".xls"):
+    __, ext = input_file.rsplit(".", 1)
+    if ext == "xls":
         orig_input_file = input_file
         input_file = input_file + "x"
         print("Convert " + orig_input_file + " to " + input_file)
@@ -219,7 +220,8 @@ if __name__ == "__main__":
 
     if output_file == "":
         output_file = "__" + input_file
-        if not output_file.lower().endswith(".xlsx") and output_file.lower().endswith(".xls"):
+	__, ext = output_file.rsplit(".", 1)
+        if ext == "xls":
             output_file = output_file + "x"
 
     if keyword_file == "":
