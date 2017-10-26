@@ -22,13 +22,14 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
 
 def usage():
-    print("review_rel_note_CR: find need-attention CRs in an excel file of a CR list for release note")
+    print("review_rel_note_CR: process need-attention CRs in an excel file of a CR list for release note")
     print("Usage: rel_note_CR [options]")
     print("       options and arguments:")
     print("       -h: show help")
     print("       -i|--input FILENAME: give the input excel file")
     print("       -o|--output FILENAME: specify the output file name (default: \"__\"##input)")
     print("       -k|--keyword FILENAME: give the keyword file")
+    print("       -a|--action ACTIONS: specify extra actions(\"keep_keyword_cr\")")
 
 def get_keywords(keyword_file):
     keywords = []
@@ -70,12 +71,10 @@ def mark_keywords(keywords, CR):
                     need_attention = need_attention + ","
                 need_attention = need_attention + keywords[i].strip("\n")
 
-    CR["Need attention"] = need_attention
+    return need_attention
 
-    return CR
-
-def review_rel_note_CR(input_file, output_file, keyword_file):
-    print("input_file = " + input_file, ", output_file = " + output_file, ", keyword_file = " + keyword_file)
+def review_rel_note_CR(input_file, output_file, keyword_file, actions):
+    print("input_file = " + input_file, ", output_file = " + output_file, ", keyword_file = " + keyword_file, ", actions = " + actions)
 
     __, ext = input_file.rsplit(".", 1)
     if ext == "xls":
@@ -125,11 +124,15 @@ def review_rel_note_CR(input_file, output_file, keyword_file):
         CRs.append(copy.copy(CR))
 
     # TODO: Add an option to remove CRs which info is empty
-    # TODO: Add an option to remove (rather than mark) CRs which record contain keywords  
 
     reviewed_CRs = []
     for i in range(0, len(CRs)):
-        reviewed_CRs.append(copy.copy(mark_keywords(keywords, CRs[i])))
+        need_attention = mark_keywords(keywords, CRs[i])
+        if actions.find("keep_keyword_cr") != -1:
+            CRs[i]["Need attention"] = need_attention
+        elif need_attention != "":
+            continue
+        reviewed_CRs.append(copy.copy(CRs[i]))
 
     wrap_alignment = Alignment(wrap_text=True)
     font = Font(name='Arial', size=10)
@@ -151,8 +154,10 @@ def review_rel_note_CR(input_file, output_file, keyword_file):
         c = reviewed_sheet.cell(row=title_row, column=1+i)
         c.value = Titles[i]
         c.font = title_font
-    reviewed_sheet.cell(row=title_row, column=1+len(Titles)).value = "Need attention"
-    reviewed_sheet.cell(row=title_row, column=1+len(Titles)).font = title_font
+    if actions.find("keep_keyword_cr") != -1:
+        print("keep_keyword_cr")
+        reviewed_sheet.cell(row=title_row, column=1+len(Titles)).value = "Need attention"
+        reviewed_sheet.cell(row=title_row, column=1+len(Titles)).font = title_font
     for i in range(0, len(reviewed_CRs)):
         for j in range(1, reviewed_sheet.max_column+1):
             c = reviewed_sheet.cell(row=title_row+1+i, column=j)
@@ -193,7 +198,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     try:
-        opts, args = getopt.getopt(argv, "hi:o:k:", ["input=", "output=", "keyword="])
+        opts, args = getopt.getopt(argv, "hi:o:k:a:", ["input=", "output=", "keyword=", "action="])
     except getopt.GetoptError:
         usage()
         sys.exit(0)
@@ -201,6 +206,7 @@ if __name__ == "__main__":
     input_file = ""
     output_file = ""
     keyword_file = ""
+    actions = ""
 
     for opt, arg in opts:
         if opt == "-h":
@@ -212,6 +218,8 @@ if __name__ == "__main__":
             output_file = arg
         elif opt in ("--keyword", "-k"):
             keyword_file = arg
+        elif opt in ("--action", "-a"):
+            actions = arg
 
     if input_file == "":
         print("Error: input file is not given")
@@ -229,4 +237,4 @@ if __name__ == "__main__":
         usage()
         sys.exit(0)
 
-    review_rel_note_CR(input_file, output_file, keyword_file)
+    review_rel_note_CR(input_file, output_file, keyword_file, actions)
