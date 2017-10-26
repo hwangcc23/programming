@@ -220,7 +220,7 @@ if __name__ == "__main__":
 
     if output_file == "":
         output_file = "__" + input_file
-	__, ext = output_file.rsplit(".", 1)
+        __, ext = output_file.rsplit(".", 1)
         if ext == "xls":
             output_file = output_file + "x"
 
