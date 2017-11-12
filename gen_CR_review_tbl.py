@@ -24,7 +24,7 @@ CON_BYPASS_MODEM = "bypass_modem"
 CON_BYPASS_CONN = "bypass_conn"
 CON_SORTING = "sorting"
 
-sorting_titles = ["id", "Severity", "Assignee.groups.name", "Assignee_Name"]
+sorting_titles = ["id", "Severity", "Assignee.groups", "Assignee_Name"]
 
 def usage():
     print("gen_CR_review_tbl: Gnerate the CR review table from the raw CQ excel file")
@@ -91,7 +91,7 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
     print("Total number of counting CRs:", len(CRs))
     #print(CRs)
     #for i in range(0, len(CRs)):
-    #    print("id =", CRs[i]["id"], "Severity =", CRs[i]["Severity"], "Assignee.groups.name =", CRs[i]["Assignee.groups.name"])
+    #    print("id =", CRs[i]["id"], "Severity =", CRs[i]["Severity"], "Assignee.groups =", CRs[i]["Assignee.groups"])
 
     team_windows = team_window_mapping(mapping_file)
     #print(team_windows)
@@ -100,23 +100,21 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
     for i in range(0, len(CRs)):
         existing = 0
         for j in range(0, len(review_tbl)):
-            if CRs[i]["Assignee.groups.name"] == review_tbl[j]["team"]:
+            if CRs[i]["Assignee.groups"] == review_tbl[j]["team"]:
                 review_tbl[j]["count"] += 1
-                if condition.find(CON_FIND_ASSIGNEE) != -1:
-                    review_tbl[j]["window"] += ";" + CRs[i]["Assignee_Name"]
-                # NoteXXX: If the team window cannot be found, assign the assignee
-                if review_tbl[j]["have_window"] == 0:
-                    review_tbl[j]["window"] += ";" + CRs[i]["Assignee_Name"]
+                if condition.find(CON_FIND_ASSIGNEE) != -1 or review_tbl[j]["have_window"] == 0:
+                    if review_tbl[j]["window"].find(CRs[i]["Assignee_Name"]) == -1:
+                        review_tbl[j]["window"] += ";" + CRs[i]["Assignee_Name"]
                 existing = 1
         if existing == 0:
             review_rec = {}
-            review_rec["team"] = CRs[i]["Assignee.groups.name"]
+            review_rec["team"] = CRs[i]["Assignee.groups"]
             review_rec["category"] = team_category(review_rec["team"])
             review_rec["count"] = 1
             review_rec["have_window"] = 0
             for k in range(0, len(team_windows)):
-                #print(CRs[i]["Assignee.groups.name"], team_windows[k]["team"])
-                if CRs[i]["Assignee.groups.name"].upper() == team_windows[k]["team"].upper():
+                #print(CRs[i]["Assignee.groups"], team_windows[k]["team"])
+                if CRs[i]["Assignee.groups"].upper() == team_windows[k]["team"].upper():
                     review_rec["window"] = team_windows[k]["window"]
                     review_rec["have_window"] = 1
                     break
