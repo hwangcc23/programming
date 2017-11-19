@@ -193,11 +193,11 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
     sheet_review.cell(row=2, column=5).fill = yellow_fill
     sheet_review.cell(row=2, column=5).border = border
     sheet_review.column_dimensions['E'].width = 8.14
-    sheet_review.cell(row=2, column=6).value = "Contact window"
+    sheet_review.cell(row=2, column=6).value = "Attendee"
     sheet_review.cell(row=2, column=6).fill = yellow_fill
     sheet_review.cell(row=2, column=6).border = border
     sheet_review.column_dimensions['F'].width = 21.57
-    sheet_review.cell(row=2, column=7).value = "Review?"
+    sheet_review.cell(row=2, column=7).value = "Reviewed?"
     sheet_review.cell(row=2, column=7).fill = yellow_fill
     sheet_review.cell(row=2, column=7).border = border
     sheet_review.column_dimensions['G'].width = 10
@@ -254,7 +254,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     input_file = ""
-    output_file = "Issue_Open.xlsx"
+    output_file = "CR_review_tbl.xlsx"
     mapping_file = ""
     condition = ""
 
