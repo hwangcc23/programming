@@ -24,7 +24,7 @@ CON_BYPASS_MODEM = "bypass_modem"
 CON_BYPASS_CONN = "bypass_conn"
 CON_SORTING = "sorting"
 
-sorting_titles = ["id", "Severity", "Assignee.groups", "Assignee_Name"]
+sorting_titles = ["id", "Severity", "Assignee.groups.name", "Assignee_Name"]
 
 def usage():
     print("gen_CR_review_tbl: Gnerate the CR review table from the raw CQ excel file")
@@ -66,7 +66,8 @@ def team_window_mapping(mapping_file):
 
 def team_category(team):
     if team.find("WSP") != -1 or team.find("wsp") != -1 \
-    or team.find("WCS") != -1 or team.find("wcs") != -1:
+    or team.find("WCS") != -1 or team.find("wcs") != -1 \
+    or team.find("CSD") != -1 or team.find("csd") != -1:
         return "Modem"
     elif team.find("CTD") != -1 or team.find("ctd") != -1 \
     or team.find("WSD_SE") != -1 or team.find("wsd_se") != -1:
