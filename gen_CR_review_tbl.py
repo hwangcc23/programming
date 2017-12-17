@@ -67,6 +67,7 @@ def team_window_mapping(mapping_file):
 def team_category(team):
     if team.find("WSP") != -1 or team.find("wsp") != -1 \
     or team.find("WCS") != -1 or team.find("wcs") != -1 \
+    or team.find("WCT") != -1 or team.find("wct") != -1 \
     or team.find("CSD") != -1 or team.find("csd") != -1:
         return "Modem"
     elif team.find("CTD") != -1 or team.find("ctd") != -1 \
@@ -99,9 +100,10 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
 
     review_tbl = []
     for i in range(0, len(CRs)):
+        # ToDO: support CON_BYPASS_APPIOT_CR
         existing = 0
         for j in range(0, len(review_tbl)):
-            if CRs[i]["Assignee.groups"] == review_tbl[j]["team"]:
+            if CRs[i]["Assignee.groups.name"] == review_tbl[j]["team"]:
                 review_tbl[j]["count"] += 1
                 if condition.find(CON_FIND_ASSIGNEE) != -1 or review_tbl[j]["have_window"] == 0:
                     if review_tbl[j]["window"].find(CRs[i]["Assignee_Name"]) == -1:
@@ -109,13 +111,13 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
                 existing = 1
         if existing == 0:
             review_rec = {}
-            review_rec["team"] = CRs[i]["Assignee.groups"]
+            review_rec["team"] = CRs[i]["Assignee.groups.name"]
             review_rec["category"] = team_category(review_rec["team"])
             review_rec["count"] = 1
             review_rec["have_window"] = 0
             for k in range(0, len(team_windows)):
                 #print(CRs[i]["Assignee.groups"], team_windows[k]["team"])
-                if CRs[i]["Assignee.groups"].upper() == team_windows[k]["team"].upper():
+                if CRs[i]["Assignee.groups.name"].upper() == team_windows[k]["team"].upper():
                     review_rec["window"] = team_windows[k]["window"]
                     review_rec["have_window"] = 1
                     break
@@ -225,6 +227,7 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
             continue
         if condition.find(CON_BYPASS_CONN) != -1 and team_category(review_tbl[i]["team"]) == "Conn":
             continue
+        # ToDo: Support CON_BYPASS_QA
         attendees += review_tbl[i]["window"] + ";"
     managers = ""
     for i in range(0, len(review_tbl)):
