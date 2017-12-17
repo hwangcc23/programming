@@ -24,6 +24,7 @@ CON_BYPASS_MODEM = "bypass_modem"
 CON_BYPASS_CONN = "bypass_conn"
 CON_BYPASS_QA = "bypass_qa"
 CON_SORTING = "sorting"
+CON_REMOVE_APPIOT_CR = "remove_appiot_cr"
 
 sorting_titles = ["id", "Severity", "Assignee.groups.name", "Assignee_Name"]
 
@@ -35,7 +36,7 @@ def usage():
     print("       -i|--input FILENAME: give the raw CQ excel file")
     print("       -o|--output FILENAME: specify the output file name")
     print("       -m|--mapping FILENAME: give the team/window mapping file")
-    print("       -c|--condition CONDITIONS: give the extra conditions(supported conditions: \"find_assignee\",\"bypass_modem\",\"bypass_conn\",\"bypass_qa\",\"sorting\")")
+    print("       -c|--condition CONDITIONS: give the extra conditions(supported conditions: find_assignee,sorting,bypass_modem,bypass_conn,bypass_qa,remove_appiot_cr)")
 
 def team_window_mapping(mapping_file):
     wb = openpyxl.load_workbook(mapping_file)
@@ -66,18 +67,13 @@ def team_window_mapping(mapping_file):
     return team_windows
 
 def team_category(team):
-    if team.find("QA") != -1 or team.find("qa") != -1 \
-    or team.find("VEND_") != -1 or team.find("vend_") != -1 \
-    or team.find("VENDOR_") != -1 or team.find("vendor_") != -1 \
-    or team == "":
+    if team.upper().find("QA") != -1 or team.upper().find("VEND_") != -1 \
+    or team.upper().find("VENDOR_") != -1 or team == "":
         return "QA"
-    elif team.find("WSP") != -1 or team.find("wsp") != -1 \
-    or team.find("WCS") != -1 or team.find("wcs") != -1 \
-    or team.find("WCT") != -1 or team.find("wct") != -1 \
-    or team.find("CSD") != -1 or team.find("csd") != -1:
+    elif team.upper().find("WSP") != -1 or team.upper().find("WCS") != -1 \
+    or team.upper().find("WCT") != -1 or team.upper().find("CSD") != -1:
         return "Modem"
-    elif team.find("CTD") != -1 or team.find("ctd") != -1 \
-    or team.find("WSD_SE") != -1 or team.find("wsd_se") != -1:
+    elif team.upper().find("CTD") != -1 or team.upper().find("WSD_SE") != -1:
         return "Conn"
     else:
         return "AP"
@@ -96,7 +92,7 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
             cell = sheet.cell(row=row, column=col)
             CR[sheet.cell(row=1, column=col).value] = cell.value
         CRs.append(copy.copy(CR))
-    print("Total number of counting CRs:", len(CRs))
+    print("Total number of counting CRs: %d" % (len(CRs)))
     #print(CRs)
     #for i in range(0, len(CRs)):
     #    print("id =", CRs[i]["id"], "Severity =", CRs[i]["Severity"], "Assignee.groups =", CRs[i]["Assignee.groups"])
@@ -105,11 +101,23 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
     #print(team_windows)
 
     review_tbl = []
+    nr_appiot_cr = 0
     for i in range(0, len(CRs)):
-        # ToDO: support CON_BYPASS_APPIOT_CR
+        if condition.find(CON_REMOVE_APPIOT_CR) != -1:
+            if 'Sqa_Feature_Group' in CRs[i] and CRs[i]["Sqa_Feature_Group"].find("APPIOT") != -1:
+                nr_appiot_cr += 1
+                continue
+            if 'Feature_Name' in CRs[i] and CRs[i]["Feature_Name"].find("APP IOT") != -1:
+                nr_appiot_cr += 1
+                continue
+            if 'Title' in CRs[i] and CRs[i]["Title"].find("APPIOT") != -1:
+                nr_appiot_cr += 1
+                continue
+
         existing = 0
         for j in range(0, len(review_tbl)):
-            if CRs[i]["Assignee.groups.name"] == review_tbl[j]["team"]:
+            if ("Assignee.groups.name" in CRs[i] and CRs[i]["Assignee.groups.name"] == review_tbl[j]["team"]) \
+            or ("Assignee.groups" in CRs[i] and CRs[i]["Assignee.groups"] == review_tbl[j]["team"]):
                 review_tbl[j]["count"] += 1
                 if condition.find(CON_FIND_ASSIGNEE) != -1 or review_tbl[j]["have_window"] == 0:
                     if review_tbl[j]["window"].find(CRs[i]["Assignee_Name"]) == -1:
@@ -117,13 +125,15 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
                 existing = 1
         if existing == 0:
             review_rec = {}
-            review_rec["team"] = CRs[i]["Assignee.groups.name"]
+            if "Assignee.groups.name" in CRs[i]:
+                review_rec["team"] = CRs[i]["Assignee.groups.name"]
+            elif "Assignee.groups" in CRs[i]:
+                review_rec["team"] = CRs[i]["Assignee.groups"]
             review_rec["category"] = team_category(review_rec["team"])
             review_rec["count"] = 1
             review_rec["have_window"] = 0
             for k in range(0, len(team_windows)):
-                #print(CRs[i]["Assignee.groups"], team_windows[k]["team"])
-                if CRs[i]["Assignee.groups.name"].upper() == team_windows[k]["team"].upper():
+                if review_rec["team"].upper() == team_windows[k]["team"].upper():
                     review_rec["window"] = team_windows[k]["window"]
                     review_rec["have_window"] = 1
                     break
@@ -136,6 +146,9 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
     review_tbl = sorted(review_tbl, key=lambda x: x["category"])
     #for i in range(0, len(review_tbl)):
     #    print(review_tbl[i]["team"], review_tbl[i]["count"], review_tbl[i]["window"])
+
+    if condition.find(CON_REMOVE_APPIOT_CR) != -1:
+        print("Remove %d APPIOT CRs" % (nr_appiot_cr))
 
     wb.active.title = "raw data"
     sheet_raw = wb.get_sheet_by_name("raw data")
