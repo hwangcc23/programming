@@ -22,6 +22,7 @@ from openpyxl.utils import get_column_letter
 CON_FIND_ASSIGNEE = "find_assignee"
 CON_BYPASS_MODEM = "bypass_modem"
 CON_BYPASS_CONN = "bypass_conn"
+CON_BYPASS_QA = "bypass_qa"
 CON_SORTING = "sorting"
 
 sorting_titles = ["id", "Severity", "Assignee.groups.name", "Assignee_Name"]
@@ -34,7 +35,7 @@ def usage():
     print("       -i|--input FILENAME: give the raw CQ excel file")
     print("       -o|--output FILENAME: specify the output file name")
     print("       -m|--mapping FILENAME: give the team/window mapping file")
-    print("       -c|--condition CONDITIONS: give the extra conditions(supported conditions: \"find_assignee\",\"bypass_modem\",\"bypass_conn\",\"sorting\")")
+    print("       -c|--condition CONDITIONS: give the extra conditions(supported conditions: \"find_assignee\",\"bypass_modem\",\"bypass_conn\",\"bypass_qa\",\"sorting\")")
 
 def team_window_mapping(mapping_file):
     wb = openpyxl.load_workbook(mapping_file)
@@ -65,7 +66,12 @@ def team_window_mapping(mapping_file):
     return team_windows
 
 def team_category(team):
-    if team.find("WSP") != -1 or team.find("wsp") != -1 \
+    if team.find("QA") != -1 or team.find("qa") != -1 \
+    or team.find("VEND_") != -1 or team.find("vend_") != -1 \
+    or team.find("VENDOR_") != -1 or team.find("vendor_") != -1 \
+    or team == "":
+        return "QA"
+    elif team.find("WSP") != -1 or team.find("wsp") != -1 \
     or team.find("WCS") != -1 or team.find("wcs") != -1 \
     or team.find("WCT") != -1 or team.find("wct") != -1 \
     or team.find("CSD") != -1 or team.find("csd") != -1:
@@ -227,7 +233,8 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
             continue
         if condition.find(CON_BYPASS_CONN) != -1 and team_category(review_tbl[i]["team"]) == "Conn":
             continue
-        # ToDo: Support CON_BYPASS_QA
+        if condition.find(CON_BYPASS_QA) != -1 and team_category(review_tbl[i]["team"]) == "QA":
+            continue
         attendees += review_tbl[i]["window"] + ";"
     managers = ""
     for i in range(0, len(review_tbl)):
@@ -236,7 +243,9 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
             continue
         if condition.find(CON_BYPASS_CONN) != -1 and team_category(team) == "Conn":
             continue
-        if team.find("MBJ_") == -1 and team.find("MCD_") == -1 and team.find("MTI_") == -1 and team.find("MTB_") == -1:
+        if condition.find(CON_BYPASS_QA) != -1 and team_category(review_tbl[i]["team"]) == "QA":
+            continue
+        if team.find("MBJ_") == -1 and team.find("MCD_") == -1 and team.find("MTI_") == -1 and team.find("MTB_") == -1  and team.find("MSZ_") == -1:
             team = "MTK_" + team
         managers += team + "_manager" + ";"
     print("Send the review meeting invitation to these windows:")
