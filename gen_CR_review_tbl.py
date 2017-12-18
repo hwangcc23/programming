@@ -22,6 +22,7 @@ from openpyxl.utils import get_column_letter
 CON_FIND_ASSIGNEE = "find_assignee"
 CON_BYPASS_MODEM = "bypass_modem"
 CON_BYPASS_CONN = "bypass_conn"
+CON_BYPASS_MM = "bypass_mm"
 CON_BYPASS_QA = "bypass_qa"
 CON_SORTING = "sorting"
 CON_REMOVE_APPIOT_CR = "remove_appiot_cr"
@@ -36,7 +37,7 @@ def usage():
     print("       -i|--input FILENAME: give the raw CQ excel file")
     print("       -o|--output FILENAME: specify the output file name")
     print("       -m|--mapping FILENAME: give the team/window mapping file")
-    print("       -c|--condition CONDITIONS: give the extra conditions(supported conditions: find_assignee,sorting,bypass_modem,bypass_conn,bypass_qa,remove_appiot_cr)")
+    print("       -c|--condition CONDITIONS: give the extra conditions(supported conditions: find_assignee,sorting,bypass_modem,bypass_mm,bypass_conn,bypass_qa,remove_appiot_cr)")
 
 def team_window_mapping(mapping_file):
     wb = openpyxl.load_workbook(mapping_file)
@@ -75,6 +76,8 @@ def team_category(team):
         return "Modem"
     elif team.upper().find("CTD") != -1 or team.upper().find("WSD_SE") != -1:
         return "Conn"
+    elif team.upper().find("MM") != -1:
+        return "MM"
     else:
         return "AP"
 
@@ -246,6 +249,8 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
             continue
         if condition.find(CON_BYPASS_QA) != -1 and team_category(review_tbl[i]["team"]) == "QA":
             continue
+        if condition.find(CON_BYPASS_MM) != -1 and team_category(review_tbl[i]["team"]) == "MM":
+            continue
         attendees += review_tbl[i]["window"] + ";"
     managers = ""
     for i in range(0, len(review_tbl)):
@@ -255,6 +260,8 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
         if condition.find(CON_BYPASS_CONN) != -1 and team_category(team) == "Conn":
             continue
         if condition.find(CON_BYPASS_QA) != -1 and team_category(review_tbl[i]["team"]) == "QA":
+            continue
+        if condition.find(CON_BYPASS_MM) != -1 and team_category(review_tbl[i]["team"]) == "MM":
             continue
         if team.find("MBJ_") == -1 and team.find("MCD_") == -1 and team.find("MTI_") == -1 and team.find("MTB_") == -1  and team.find("MSZ_") == -1:
             team = "MTK_" + team
