@@ -86,13 +86,26 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
     CRs = []
     wb = openpyxl.load_workbook(input_file)
     sheet = wb.active
+    nr_appiot_cr = 0
     for row in range(2, sheet.max_row + 1):
         CR = {}
         for col in range(1, sheet.max_column + 1):
             cell = sheet.cell(row=row, column=col)
             CR[sheet.cell(row=1, column=col).value] = cell.value
+        if condition.find(CON_REMOVE_APPIOT_CR) != -1:
+            if 'Sqa_Feature_Group' in CR and CR["Sqa_Feature_Group"].find("APPIOT") != -1:
+                nr_appiot_cr += 1
+                continue
+            elif 'Feature_Name' in CR and CR["Feature_Name"].find("APP IOT") != -1:
+                nr_appiot_cr += 1
+                continue
+            elif 'Title' in CR and CR["Title"].find("APPIOT") != -1:
+                nr_appiot_cr += 1
+                continue
         CRs.append(copy.copy(CR))
-    print("Total number of counting CRs: %d" % (len(CRs)))
+    print("Total number of counting CRs: %d" % (len(CRs) + nr_appiot_cr))
+    if condition.find(CON_REMOVE_APPIOT_CR) != -1:
+        print("Remove %d APPIOT CRs" % (nr_appiot_cr))
     #print(CRs)
     #for i in range(0, len(CRs)):
     #    print("id =", CRs[i]["id"], "Severity =", CRs[i]["Severity"], "Assignee.groups =", CRs[i]["Assignee.groups"])
@@ -101,19 +114,7 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
     #print(team_windows)
 
     review_tbl = []
-    nr_appiot_cr = 0
     for i in range(0, len(CRs)):
-        if condition.find(CON_REMOVE_APPIOT_CR) != -1:
-            if 'Sqa_Feature_Group' in CRs[i] and CRs[i]["Sqa_Feature_Group"].find("APPIOT") != -1:
-                nr_appiot_cr += 1
-                continue
-            if 'Feature_Name' in CRs[i] and CRs[i]["Feature_Name"].find("APP IOT") != -1:
-                nr_appiot_cr += 1
-                continue
-            if 'Title' in CRs[i] and CRs[i]["Title"].find("APPIOT") != -1:
-                nr_appiot_cr += 1
-                continue
-
         existing = 0
         for j in range(0, len(review_tbl)):
             if ("Assignee.groups.name" in CRs[i] and CRs[i]["Assignee.groups.name"] == review_tbl[j]["team"]) \
@@ -146,9 +147,6 @@ def gen_CR_review_tbl(input_file, output_file, mapping_file, condition):
     review_tbl = sorted(review_tbl, key=lambda x: x["category"])
     #for i in range(0, len(review_tbl)):
     #    print(review_tbl[i]["team"], review_tbl[i]["count"], review_tbl[i]["window"])
-
-    if condition.find(CON_REMOVE_APPIOT_CR) != -1:
-        print("Remove %d APPIOT CRs" % (nr_appiot_cr))
 
     wb.active.title = "raw data"
     sheet_raw = wb.get_sheet_by_name("raw data")
