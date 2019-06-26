@@ -33,3 +33,4 @@
 
 # Virtualenv folder
 env/
+tensorflow-env/
