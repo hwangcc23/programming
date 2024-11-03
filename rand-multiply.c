@@ -9,7 +9,6 @@ int main(int argc, char **argv)
 	int ch;
 
 	seed = (unsigned int)time(NULL);
-	printf("seed = %d\n", seed);
 
 	srand(seed);
 
@@ -20,22 +19,20 @@ int main(int argc, char **argv)
 
 		printf("Press ENTER to get the answer\n");
 		ch = getchar();
-		if (ch < 0) {
+		if (ch < 0)
 			printf("getchar() returned %d\n", ch);
-		}
 
 		printf("x * y = %d\n", x * y);
 
 		printf("Press ENTER to continue, or press 'Q' to exit\n");
 		ch = getchar();
-		if (ch < 0) {
+		if (ch < 0)
 			printf("getchar() returned %d\n", ch);
-		} else if (ch == (int)'Q' || ch == (int)'q') {
+		else if (ch == (int)'Q' || ch == (int)'q')
 			break;
-		} else
+		else
 			continue;
 	}
 
 	return 0;
-
 }
